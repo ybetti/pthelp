@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,36 +11,67 @@
   </style>
 </head>
 <body>
+  <select id="videoSource"></select>
   <video id="video" width="640" height="480" autoplay></video>
   <canvas id="canvas" width="640" height="480"></canvas>
   <script>
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
     const context = canvas.getContext('2d');
+    const videoSelect = document.getElementById('videoSource');
 
-    // リアカメラを使用するための制約を設定
-    const constraints = {
-      video: {
-        facingMode: { exact: "environment" } // "user"（内カメ） を "environment" に変更することでリア（外）カメラを使用する
+    // カメラデバイスのリストを取得
+    navigator.mediaDevices.enumerateDevices()
+      .then(gotDevices)
+      .catch(handleError);
+
+    videoSelect.onchange = start;
+
+    function gotDevices(deviceInfos) {
+      for (let i = 0; i !== deviceInfos.length; ++i) {
+        const deviceInfo = deviceInfos[i];
+        const option = document.createElement('option');
+        option.value = deviceInfo.deviceId;
+        if (deviceInfo.kind === 'videoinput') {
+          option.text = deviceInfo.label || `camera ${videoSelect.length + 1}`;
+          videoSelect.appendChild(option);
+        }
       }
-    };
+    }
 
-    // ビデオを取得して表示
-    navigator.mediaDevices.getUserMedia(constraints)
-      .then(function(stream) {
-        video.srcObject = stream;
-        video.play();
-      })
-      .catch(function(err) {
-        console.log("An error occurred: " + err);
-      });
+    function start() {
+      if (window.stream) {
+        window.stream.getTracks().forEach(track => track.stop());
+      }
+
+      const videoSource = videoSelect.value;
+      const constraints = {
+        video: {
+          deviceId: videoSource ? { exact: videoSource } : undefined
+        }
+      };
+
+      navigator.mediaDevices.getUserMedia(constraints)
+        .then(gotStream)
+        .catch(handleError);
+    }
+
+    function gotStream(stream) {
+      window.stream = stream;
+      video.srcObject = stream;
+      video.play();
+      draw();
+    }
+
+    function handleError(error) {
+      console.error('Error: ', error);
+    }
 
     function calculateDistance(point1, point2) {
       return Math.sqrt(Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2));
     }
 
     function isOrangeOrYellow(r, g, b) {
-      // オレンジや黄色の範囲をチェック
       return (r > 150 && g > 100 && b < 100); // 具体的な数値は調整が必要
     }
 
@@ -66,7 +97,6 @@
             const x = (i / 4) % canvas.width;
             const y = Math.floor((i / 4) / canvas.width);
 
-            // 周りのピクセルをチェック
             let surroundingIsOrangeOrYellow = false;
             for (let dx = -1; dx <= 1; dx++) {
               for (let dy = -1; dy <= 1; dy++) {
@@ -93,12 +123,11 @@
           }
         }
 
-        // 上位5つの赤い領域にマーカーを描画
         const markers = [];
         redPixels.forEach(pixel => {
           let canDrawMarker = true;
           markers.forEach(marker => {
-            if (calculateDistance(pixel, marker) < 40) { // 40ピクセル以内に他のマーカーがある場合、マーカーを描画しない
+            if (calculateDistance(pixel, marker) < 40) {
               canDrawMarker = false;
             }
           });
@@ -113,17 +142,11 @@
         });
       }
 
-      // 現在のフレームを保存して次のフレームと比較するために使用
       previousFrame = frame;
-
-      // 次のフレームの描画をリクエスト
       requestAnimationFrame(draw);
     }
 
-    // ビデオが再生されたら描画関数を呼び出す
-    video.addEventListener('play', function() {
-      draw();
-    });
+    navigator.mediaDevices.enumerateDevices().then(start);
   </script>
 </body>
 </html>
