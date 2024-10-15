@@ -25,7 +25,7 @@
     // リアカメラを使用するための制約を設定
     const constraints = {
       video: {
-        facingMode: { exact: "environment" } // "user"（内カメ） を "environment" に変更することでリア（外）カメラを使用する
+        facingMode: { exact: "environment" }
       }
     };
 
@@ -45,10 +45,25 @@
 
     function isOrangeOrYellow(r, g, b) {
       // オレンジや黄色の範囲をチェック
-      return (r > 150 && g > 100 && b < 100); // 具体的な数値は調整が必要
+      return (r > 150 && g > 100 && b < 100); 
     }
 
     let previousFrame = null;
+    let isVibrating = false; // バイブレーション中かどうかを追跡
+
+    function startVibration() {
+      if (!isVibrating) {
+        navigator.vibrate(1000); // バイブレーションを1秒間持続
+        isVibrating = true;
+      }
+    }
+
+    function stopVibration() {
+      if (isVibrating) {
+        navigator.vibrate(0); // バイブレーションを停止
+        isVibrating = false;
+      }
+    }
 
     function draw() {
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -102,7 +117,7 @@
         redPixels.forEach(pixel => {
           let canDrawMarker = true;
           markers.forEach(marker => {
-            if (calculateDistance(pixel, marker) < 40) { // 40ピクセル以内に他のマーカーがある場合、マーカーを描画しない
+            if (calculateDistance(pixel, marker) < 40) { 
               canDrawMarker = false;
             }
           });
@@ -115,12 +130,16 @@
             context.stroke();
           }
         });
+
+        // バイブレーションの制御
+        if (markers.length > 0) {
+          startVibration(); // マーカーがあればバイブレーション開始
+        } else {
+          stopVibration(); // マーカーがなければバイブレーション停止
+        }
       }
 
-      // 現在のフレームを保存して次のフレームと比較するために使用
       previousFrame = frame;
-
-      // 次のフレームの描画をリクエスト
       requestAnimationFrame(draw);
     }
 
