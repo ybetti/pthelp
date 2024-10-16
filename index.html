@@ -1,9 +1,8 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Video Recorder with Markers</title>
+  <title>PThelper</title>
   <style>
     #canvas {
       border: 1px solid black;
@@ -11,7 +10,8 @@
     #video {
       display: none;
     }
-    #record-btn {
+    /* スクリーンショットボタンのスタイル */
+    #screenshot-btn {
       margin-top: 30px;
       padding: 20px 40px;
       background-color: #4CAF50;
@@ -25,17 +25,13 @@
 <body>
   <video id="video" width="480" height="640" autoplay></video>
   <canvas id="canvas" width="480" height="640"></canvas>
-  <button id="record-btn">録画を開始</button>
-
+  <button id="screenshot-btn">スクリーンショットを撮影</button>
+  
   <script>
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
     const context = canvas.getContext('2d');
-    const recordBtn = document.getElementById('record-btn');
-
-    let mediaRecorder;
-    let chunks = [];
-    let recording = false;
+    const screenshotBtn = document.getElementById('screenshot-btn');
 
     // リアカメラを使用するための制約を設定
     const constraints = {
@@ -49,23 +45,6 @@
       .then(function(stream) {
         video.srcObject = stream;
         video.play();
-
-        // MediaRecorderの初期化
-        mediaRecorder = new MediaRecorder(stream);
-
-        mediaRecorder.ondataavailable = function(e) {
-          chunks.push(e.data);
-        };
-
-        mediaRecorder.onstop = function() {
-          const blob = new Blob(chunks, { type: 'video/mp4' });
-          const videoURL = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = videoURL;
-          link.download = 'recording.mp4';
-          link.click();
-          chunks = [];
-        };
       })
       .catch(function(err) {
         console.log("An error occurred: " + err);
@@ -76,115 +55,111 @@
     }
 
     function isOrangeOrYellow(r, g, b) {
-      return (r > 150 && g > 100 && b < 100);
+      return (r > 150 && g > 100 && b < 100); 
     }
 
     let previousFrame = null;
-    let isVibrating = false;
+    let isVibrating = false; // バイブレーション中かどうかを追跡
 
     function startVibration() {
       if (!isVibrating) {
-        navigator.vibrate([500, 500]);
+        navigator.vibrate([500, 500]); // バイブレーションを間隔を開けて繰り返す
         isVibrating = true;
       }
     }
 
     function stopVibration() {
       if (isVibrating) {
-        navigator.vibrate(0);
+        navigator.vibrate(0); // バイブレーションを停止
         isVibrating = false;
-      }
-    }
-
-    function drawMarkers(frame) {
-      const redPixels = [];
-      const length = frame.data.length;
-
-      for (let i = 0; i < length; i += 4) {
-        const red = frame.data[i];
-        const green = frame.data[i + 1];
-        const blue = frame.data[i + 2];
-
-        const prevRed = previousFrame ? previousFrame.data[i] : 0;
-
-        if (red > 90 && red > prevRed) {
-          const x = (i / 4) % canvas.width;
-          const y = Math.floor((i / 4) / canvas.width);
-
-          let surroundingIsOrangeOrYellow = false;
-          for (let dx = -1; dx <= 1; dx++) {
-            for (let dy = -1; dy <= 1; dy++) {
-              if (dx === 0 && dy === 0) continue;
-              const nx = x + dx;
-              const ny = y + dy;
-              if (nx >= 0 && nx < canvas.width && ny >= 0 && ny < canvas.height) {
-                const index = (ny * canvas.width + nx) * 4;
-                const nr = frame.data[index];
-                const ng = frame.data[index + 1];
-                const nb = frame.data[index + 2];
-                if (isOrangeOrYellow(nr, ng, nb)) {
-                  surroundingIsOrangeOrYellow = true;
-                  break;
-                }
-              }
-            }
-            if (surroundingIsOrangeOrYellow) break;
-          }
-
-          if (surroundingIsOrangeOrYellow) {
-            redPixels.push({ x, y, red });
-          }
-        }
-      }
-
-      const markers = [];
-      redPixels.forEach(pixel => {
-        let canDrawMarker = true;
-        markers.forEach(marker => {
-          if (calculateDistance(pixel, marker) < 40) {
-            canDrawMarker = false;
-          }
-        });
-        if (canDrawMarker) {
-          markers.push(pixel);
-          context.beginPath();
-          context.arc(pixel.x, pixel.y, 8, 0, 2 * Math.PI, false);
-          context.lineWidth = 4;
-          context.strokeStyle = 'lightgreen';
-          context.stroke();
-        }
-      });
-
-      if (markers.length > 0) {
-        startVibration();
-      } else {
-        stopVibration();
       }
     }
 
     function draw() {
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
       const frame = context.getImageData(0, 0, canvas.width, canvas.height);
-      drawMarkers(frame);
+      const length = frame.data.length;
+
+      if (previousFrame) {
+        const redPixels = [];
+
+        for (let i = 0; i < length; i += 4) {
+          const red = frame.data[i];
+          const green = frame.data[i + 1];
+          const blue = frame.data[i + 2];
+          const alpha = frame.data[i + 3];
+
+          const prevRed = previousFrame.data[i];
+
+          if (red > 90 && red > prevRed) {
+            const x = (i / 4) % canvas.width;
+            const y = Math.floor((i / 4) / canvas.width);
+
+            let surroundingIsOrangeOrYellow = false;
+            for (let dx = -1; dx <= 1; dx++) {
+              for (let dy = -1; dy <= 1; dy++) {
+                if (dx === 0 && dy === 0) continue;
+                const nx = x + dx;
+                const ny = y + dy;
+                if (nx >= 0 && nx < canvas.width && ny >= 0 && ny < canvas.height) {
+                  const index = (ny * canvas.width + nx) * 4;
+                  const nr = frame.data[index];
+                  const ng = frame.data[index + 1];
+                  const nb = frame.data[index + 2];
+                  if (isOrangeOrYellow(nr, ng, nb)) {
+                    surroundingIsOrangeOrYellow = true;
+                    break;
+                  }
+                }
+              }
+              if (surroundingIsOrangeOrYellow) break;
+            }
+
+            if (surroundingIsOrangeOrYellow) {
+              redPixels.push({ x, y, red });
+            }
+          }
+        }
+
+        const markers = [];
+        redPixels.forEach(pixel => {
+          let canDrawMarker = true;
+          markers.forEach(marker => {
+            if (calculateDistance(pixel, marker) < 40) {
+              canDrawMarker = false;
+            }
+          });
+          if (canDrawMarker) {
+            markers.push(pixel);
+            context.beginPath();
+            context.arc(pixel.x, pixel.y, 8, 0, 2 * Math.PI, false);
+            context.lineWidth = 4;
+            context.strokeStyle = 'lightgreen';
+            context.stroke();
+          }
+        });
+
+        if (markers.length > 0) {
+          startVibration(); 
+        } else {
+          stopVibration();
+        }
+      }
+
       previousFrame = frame;
       requestAnimationFrame(draw);
     }
 
-    // 録画を開始/停止する関数
-    function toggleRecording() {
-      if (!recording) {
-        mediaRecorder.start();
-        recordBtn.textContent = '録画を停止';
-        recording = true;
-      } else {
-        mediaRecorder.stop();
-        recordBtn.textContent = '録画を開始';
-        recording = false;
-      }
+    // スクリーンショットを撮る関数
+    function takeScreenshot() {
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL(); // canvasの内容を画像データに変換
+      link.download = 'screenshot.png'; // ファイル名を設定
+      link.click(); // ダウンロードを実行
     }
 
-    // ボタンクリック時に録画を開始/停止
-    recordBtn.addEventListener('click', toggleRecording);
+    // ボタンクリック時にスクリーンショットを撮る
+    screenshotBtn.addEventListener('click', takeScreenshot);
 
     // ビデオが再生されたら描画関数を呼び出す
     video.addEventListener('play', function() {
