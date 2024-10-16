@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -10,7 +11,6 @@
     #video {
       display: none;
     }
-    /* スクリーンショットボタンのスタイル */
     #screenshot-btn {
       margin-top: 30px;
       padding: 20px 40px;
@@ -32,15 +32,14 @@
     const canvas = document.getElementById('canvas');
     const context = canvas.getContext('2d');
     const screenshotBtn = document.getElementById('screenshot-btn');
+    const beepSound = new Audio('beep.mp3'); // 音声ファイルをロード
 
-    // リアカメラを使用するための制約を設定
     const constraints = {
       video: {
         facingMode: { exact: "environment" }
       }
     };
 
-    // ビデオを取得して表示
     navigator.mediaDevices.getUserMedia(constraints)
       .then(function(stream) {
         video.srcObject = stream;
@@ -51,7 +50,7 @@
       });
 
     function calculateDistance(point1, point2) {
-      return Math.sqrt(Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2));
+      return Math.sqrt(Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point2.y, 2));
     }
 
     function isOrangeOrYellow(r, g, b) {
@@ -59,18 +58,18 @@
     }
 
     let previousFrame = null;
-    let isVibrating = false; // バイブレーション中かどうかを追跡
+    let isVibrating = false;
 
     function startVibration() {
       if (!isVibrating) {
-        navigator.vibrate([500, 500]); // バイブレーションを間隔を開けて繰り返す
+        navigator.vibrate([500, 500]);
         isVibrating = true;
       }
     }
 
     function stopVibration() {
       if (isVibrating) {
-        navigator.vibrate(0); // バイブレーションを停止
+        navigator.vibrate(0);
         isVibrating = false;
       }
     }
@@ -136,6 +135,7 @@
             context.lineWidth = 4;
             context.strokeStyle = 'lightgreen';
             context.stroke();
+            beepSound.play(); // 音を再生
           }
         });
 
@@ -163,7 +163,7 @@
 
     // ビデオが再生されたら描画関数を呼び出す
     video.addEventListener('play', function() {
-      draw();
+      draw(); // 描画をすぐに開始
     });
   </script>
 </body>
