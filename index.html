@@ -64,14 +64,14 @@
 
     function startVibration() {
       if (!isVibrating) {
-        navigator.vibrate(1000);
+        navigator.vibrate([500, 500]); // バイブレーションを間隔を開けて繰り返す
         isVibrating = true;
       }
     }
 
     function stopVibration() {
       if (isVibrating) {
-        navigator.vibrate(0);
+        navigator.vibrate(0); // バイブレーションを停止
         isVibrating = false;
       }
     }
