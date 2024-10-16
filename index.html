@@ -26,7 +26,7 @@
 <body>
   <video id="video" width="480" height="640" autoplay></video>
   <canvas id="canvas" width="480" height="640"></canvas>
-  <button id="screenshot-btn">写真を撮影する</button>
+  <button id="screenshot-btn">スクリーンショットを撮る</button>
   
   <script>
     const video = document.getElementById('video');
@@ -151,17 +151,16 @@
       requestAnimationFrame(draw);
     }
 
-    // 写真を撮影する関数
-    function takePhoto() {
-      context.drawImage(video, 0, 0, canvas.width, canvas.height); // ビデオの現在のフレームをキャンバスに描画
+    // スクリーンショットを撮る関数
+    function takeScreenshot() {
       const link = document.createElement('a');
       link.href = canvas.toDataURL(); // canvasの内容を画像データに変換
-      link.download = 'photo.png'; // ファイル名を設定
+      link.download = 'screenshot.png'; // ファイル名を設定
       link.click(); // ダウンロードを実行
     }
 
-    // ボタンクリック時に写真を撮影
-    screenshotBtn.addEventListener('click', takePhoto);
+    // ボタンクリック時にスクリーンショットを撮る
+    screenshotBtn.addEventListener('click', takeScreenshot);
 
     // ビデオが再生されたら描画関数を呼び出す
     video.addEventListener('play', function() {
