@@ -8,19 +8,31 @@
     #canvas {
       border: 1px solid black;
     }
-    /* ビデオ要素を非表示にする */
     #video {
       display: none;
+    }
+    /* スクリーンショットボタンのスタイル */
+    #screenshot-btn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
   <video id="video" width="640" height="480" autoplay></video>
   <canvas id="canvas" width="640" height="480"></canvas>
+  <button id="screenshot-btn">スクリーンショットを撮る</button>
+  
   <script>
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
     const context = canvas.getContext('2d');
+    const screenshotBtn = document.getElementById('screenshot-btn');
 
     // リアカメラを使用するための制約を設定
     const constraints = {
@@ -44,7 +56,6 @@
     }
 
     function isOrangeOrYellow(r, g, b) {
-      // オレンジや黄色の範囲をチェック
       return (r > 150 && g > 100 && b < 100); 
     }
 
@@ -53,25 +64,16 @@
 
     function startVibration() {
       if (!isVibrating) {
-        navigator.vibrate(1000); // バイブレーションを1秒間持続
+        navigator.vibrate(1000);
         isVibrating = true;
-        takePhoto(); // バイブレーションが開始されたら写真を撮影
       }
     }
 
     function stopVibration() {
       if (isVibrating) {
-        navigator.vibrate(0); // バイブレーションを停止
+        navigator.vibrate(0);
         isVibrating = false;
       }
-    }
-
-    function takePhoto() {
-      const photo = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.href = photo;
-      link.download = 'captured_image.png'; // ダウンロードされる画像ファイル名
-      link.click(); // 自動的にダウンロードを開始
     }
 
     function draw() {
@@ -94,7 +96,6 @@
             const x = (i / 4) % canvas.width;
             const y = Math.floor((i / 4) / canvas.width);
 
-            // 周りのピクセルをチェック
             let surroundingIsOrangeOrYellow = false;
             for (let dx = -1; dx <= 1; dx++) {
               for (let dy = -1; dy <= 1; dy++) {
@@ -121,12 +122,11 @@
           }
         }
 
-        // 上位5つの赤い領域にマーカーを描画
         const markers = [];
         redPixels.forEach(pixel => {
           let canDrawMarker = true;
           markers.forEach(marker => {
-            if (calculateDistance(pixel, marker) < 40) { 
+            if (calculateDistance(pixel, marker) < 40) {
               canDrawMarker = false;
             }
           });
@@ -140,17 +140,27 @@
           }
         });
 
-        // バイブレーションと写真撮影の制御
         if (markers.length > 0) {
-          startVibration(); // マーカーがあればバイブレーション開始して写真を撮影
+          startVibration(); 
         } else {
-          stopVibration(); // マーカーがなければバイブレーション停止
+          stopVibration();
         }
       }
 
       previousFrame = frame;
       requestAnimationFrame(draw);
     }
+
+    // スクリーンショットを撮る関数
+    function takeScreenshot() {
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL(); // canvasの内容を画像データに変換
+      link.download = 'screenshot.png'; // ファイル名を設定
+      link.click(); // ダウンロードを実行
+    }
+
+    // ボタンクリック時にスクリーンショットを撮る
+    screenshotBtn.addEventListener('click', takeScreenshot);
 
     // ビデオが再生されたら描画関数を呼び出す
     video.addEventListener('play', function() {
