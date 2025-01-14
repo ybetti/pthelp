@@ -23,8 +23,8 @@
   </style>
 </head>
 <body>
-  <video id="video" width="400" height="500" autoplay></video>
-  <canvas id="canvas" width="400" height="500"></canvas>
+  <video id="video" width="320" height="500" autoplay></video>
+  <canvas id="canvas" width="320" height="500"></canvas>
   <button id="screenshot-btn">スクリーンショットを撮影</button>
   
   <script>
@@ -54,7 +54,7 @@
     }
 
     function isOrangeOrYellow(r, g, b) {
-      return (r > 180 && g > 100 && b < 130); 
+      return (r > 190 && g > 120 && b < 130); 
     }
 
     let previousFrame = null;
