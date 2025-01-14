@@ -31,7 +31,6 @@
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
     const context = canvas.getContext('2d');
-    const screenshotBtn = document.getElementById('screenshot-btn');
     const beepSound = new Audio('beep.mp3'); // 音声ファイルをロード
 
     const constraints = {
@@ -62,7 +61,7 @@
 
     function startVibration() {
       if (!isVibrating) {
-        navigator.vibrate([500, 500]);
+        navigator.vibrate([500, 500]); // 短い振動を繰り返し発生
         isVibrating = true;
       }
     }
@@ -149,17 +148,6 @@
       previousFrame = frame;
       requestAnimationFrame(draw);
     }
-
-    // スクリーンショットを撮る関数
-    function takeScreenshot() {
-      const link = document.createElement('a');
-      link.href = canvas.toDataURL(); // canvasの内容を画像データに変換
-      link.download = 'screenshot.png'; // ファイル名を設定
-      link.click(); // ダウンロードを実行
-    }
-
-    // ボタンクリック時にスクリーンショットを撮る
-    screenshotBtn.addEventListener('click', takeScreenshot);
 
     // ビデオが再生されたら描画関数を呼び出す
     video.addEventListener('play', function() {
