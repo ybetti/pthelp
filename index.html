@@ -54,7 +54,7 @@
     }
 
     function isOrangeOrYellow(r, g, b) {
-      return (r > 150 && g > 100 && b < 100); 
+      return (r > 130 && g > 150 && b < 130); 
     }
 
     let previousFrame = null;
@@ -124,7 +124,7 @@
         redPixels.forEach(pixel => {
           let canDrawMarker = true;
           markers.forEach(marker => {
-            if (calculateDistance(pixel, marker) < 40) {
+            if (calculateDistance(pixel, marker) < 25) {
               canDrawMarker = false;
             }
           });
